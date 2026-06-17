@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A3 portrait;
+            margin: 0;
+        }
+
+        body {
+            background-color: #09090b;
+            color: #fafafa;
+            font-family: 'Georgia', serif;
+            margin: 0;
+            padding: 0;
+            width: 297mm;
+            height: 420mm;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            border: 5mm solid #1e1e24; /* Outer border */
+            position: relative;
+        }
+
+        /* Inner gold border */
+        .inner-border {
+            position: absolute;
+            top: 5mm;
+            left: 5mm;
+            right: 5mm;
+            bottom: 5mm;
+            border: 1px solid #d4b96a;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+
+        .header {
+            margin-top: 3cm;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28pt;
+            letter-spacing: 8px;
+            font-weight: 300;
+            text-transform: uppercase;
+            color: #d4b96a;
+            margin: 0;
+        }
+
+        .header p {
+            font-size: 11pt;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: #a1a1aa;
+            margin-top: 10px;
+        }
+
+        .map-container {
+            width: 22cm;
+            height: 22cm;
+            margin: auto 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .map-container svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .footer {
+            margin-bottom: 3cm;
+            text-align: center;
+        }
+
+        .user-name {
+            font-size: 20pt;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: #fafafa;
+            margin: 0 0 15px 0;
+            font-weight: normal;
+        }
+
+        .birth-details {
+            font-size: 11pt;
+            color: #a1a1aa;
+            letter-spacing: 2px;
+            line-height: 1.8;
+            margin: 0;
+        }
+
+        .coordinates {
+            font-size: 9pt;
+            color: #d4b96a;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="inner-border"></div>
+
+    <div class="header">
+        <h1>Carte du Ciel</h1>
+        <p>— Le Portrait de votre Âme —</p>
+    </div>
+
+    <div class="map-container">
+        {{ svg_map | safe }}
+    </div>
+
+    <div class="footer">
+        <h2 class="user-name">{{ full_name }}</h2>
+        <p class="birth-details">
+            Né(e) le {{ birth_date_info }} à {{ birth_city }}
+        </p>
+        <p class="coordinates">
+            Lat : {{ latitude }}° | Lon : {{ longitude }}°
+        </p>
+    </div>
+
+</body>
+</html>
