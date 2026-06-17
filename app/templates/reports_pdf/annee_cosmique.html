@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+            @bottom-center {
+                content: "— " counter(page) " —";
+                font-family: serif;
+                font-size: 10pt;
+                color: #999;
+            }
+        }
+
+        :root {
+            --dark: #1a1a1a;
+            --gold: #e79d12;
+            --soft-gold: #e5d1ae;
+            --light-grey: #f9f9f9;
+            --border-color: #e8e8e8;
+            --text: #3d3d3d;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            background: white;
+        }
+
+        .page-break { page-break-after: always; }
+        .text-center { text-align: center; }
+
+        /* Cover Page */
+        .cover {
+            height: 25cm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid var(--gold);
+            padding: 2cm;
+            box-sizing: border-box;
+        }
+
+        .cover-header {
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-size: 14pt;
+            color: var(--gold);
+        }
+
+        .cover-main h1 {
+            font-size: 36pt;
+            font-weight: normal;
+            margin: 0;
+            color: var(--dark);
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .user-name {
+            font-size: 20pt;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 2cm;
+            color: var(--dark);
+        }
+
+        .section-title {
+            font-size: 18pt;
+            color: var(--dark);
+            border-bottom: 1pt solid var(--gold);
+            margin-bottom: 0.8cm;
+            margin-top: 1cm;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .grid-2 { 
+            display: table;
+            width: 100%;
+            border-spacing: 10px;
+        }
+        
+        .card {
+            display: table-cell;
+            width: 50%;
+            padding: 12px;
+            background: var(--light-grey);
+            border-left: 3pt solid var(--gold);
+            vertical-align: top;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 1cm 0; }
+        th { text-align: left; padding: 10px; border-bottom: 1pt solid var(--gold); color: #888; font-size: 9pt; text-transform: uppercase; }
+        td { padding: 10px; border-bottom: 0.5pt solid var(--border-color); font-size: 11pt; }
+
+        .block-container { margin-bottom: 1.5cm; page-break-inside: avoid; }
+        .block-subtitle {
+            font-size: 14pt;
+            color: var(--gold);
+            margin-bottom: 8px;
+            display: block;
+            font-weight: bold;
+        }
+        .paragraph { margin-bottom: 12px; text-align: justify; }
+        
+        .domain-box {
+            margin-bottom: 1.2cm;
+            background-color: #fdfdfd;
+            border: 0.5pt solid var(--border-color);
+            padding: 15px;
+            page-break-inside: avoid;
+        }
+        .domain-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: var(--gold);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .summary-box {
+            background-color: #fcfaf7;
+            padding: 20px;
+            border: 0.5pt solid var(--soft-gold);
+            font-style: italic;
+            margin-top: 1cm;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cover Page -->
+    <div class="cover">
+        <div class="cover-header">Indira Astrology</div>
+        <div class="cover-main">
+            <h1>L'ANNÉE<br>COSMIQUE</h1>
+            <p class="text-center" style="color: var(--gold); font-size: 14pt; margin-top: 10px;">— Vos Prévisions sur 12 Mois —</p>
+            <div class="user-name text-center">{{ full_name }}</div>
+        </div>
+        <div class="text-center">
+            <p>Né(e) le {{ birth_date_info }}</p>
+            <p style="font-size: 9pt; color: #999;">Document confidentiel — Généré le {{ generated_at }}</p>
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Solar Return Section -->
+    {% if forecast_data and forecast_data.solar_return %}
+    <div class="section">
+        <h2 class="section-title">La Révolution Solaire</h2>
+        <p>
+            La Révolution Solaire calcule la carte de votre ciel au moment exact où le Soleil retourne à sa position natale exacte de votre naissance.
+            Ce moment marque le début de votre année personnelle et donne les thématiques clés des 12 prochains mois.
+        </p>
+        <p style="font-style: italic;">
+            Votre Révolution Solaire a lieu le : <strong>{{ forecast_data.solar_return.solar_return_datetime }} (UTC)</strong>.
+        </p>
+
+        <h3 style="color: var(--dark); margin-top: 1cm;">Positions Planétaires de la Révolution Solaire</h3>
+        <div class="grid-2">
+            {% for name, data in forecast_data.solar_return.planets.items() %}
+                <div class="card" style="margin-bottom: 5px;">
+                    <strong style="color: var(--gold); font-size: 9pt; text-transform: uppercase;">{{ name }}</strong><br>
+                    <span style="font-size: 11pt;">{{ data.sign }}</span> <br>
+                    <span style="color: #888; font-size: 9pt;">Degré : {{ data.deg }}°</span>
+                </div>
+                {% if loop.index is even and not loop.last %}
+                    </div><div class="grid-2" style="margin-top: 10px;">
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <div class="page-break"></div>
+    {% endif %}
+
+    <!-- Retrograde Stations -->
+    {% if forecast_data and forecast_data.transits and forecast_data.transits.stations %}
+    <div class="section">
+        <h2 class="section-title">Les Stations Rétrogrades Majeures</h2>
+        <p>
+            Lorsqu'une planète semble reculer dans le ciel depuis la Terre, elle est dite "rétrograde". Les jours de ses stations (les moments où elle s'arrête pour changer de sens)
+            sont des points d'inflexion énergétiques majeurs.
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Planète</th>
+                    <th>Événement</th>
+                    <th>Date exacte</th>
+                    <th>Position zodiacale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for station in forecast_data.transits.stations %}
+                <tr>
+                <td><strong>{{ station.planet }}</strong></td>
+                <td {% if station.type == 'Rétrograde' %}style="color: #d93838;"{% else %}style="color: #2b8a3e;"{% endif %}>
+                    Station {{ station.type }}
+                </td>
+                    <td>{{ station.date }}</td>
+                    <td>{{ station.lon }}°</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="page-break"></div>
+    {% endif %}
+
+    <!-- Detailed Predictions Section -->
+    {% if ai_content and ai_content.sections %}
+        {% for section in ai_content.sections %}
+            {% if section.id == "predictions_detailed" %}
+            <div class="section">
+                <h2 class="section-title">{{ section.title }}</h2>
+                
+                {% for block in section.blocks %}
+                <div class="block-container">
+                    <span class="block-subtitle">{{ block.subtitle }}</span>
+                    {% for para in block.paragraphs %}
+                        <p class="paragraph">{{ para }}</p>
+                    {% endfor %}
+                    
+                    {% if block.conseil %}
+                        <p style="color: #444; font-size: 10.5pt; border-left: 2px solid var(--gold); padding-left: 15px; margin-top: 15px; font-style: italic;">
+                            <strong>Date clé & Conseil :</strong> {{ block.conseil }}
+                        </p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                {% if section.summary %}
+                <div class="summary-box">
+                    <strong>Synthèse de votre année :</strong><br>
+                    {{ section.summary }}
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+</body>
+</html>
