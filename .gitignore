@@ -20,3 +20,5 @@ venv/
 
 # Migrations (si jamais tu ajoutes une DB)
 migrations/
+
+docker-compose.override.yaml
