@@ -79,4 +79,14 @@ class ReportRepository:
             db_report.error_log = error_message
             await self.db.commit()
 
-            
+
+    async def update_asset_urls(self, report_id: int, audio_url: str = None, poster_url: str = None) -> Optional[AstrologicalReport]:
+        db_report = await self.get_by_id(report_id)
+        if db_report:
+            if audio_url is not None:
+                db_report.audio_url = audio_url
+            if poster_url is not None:
+                db_report.poster_url = poster_url
+            await self.db.commit()
+            await self.db.refresh(db_report)
+        return db_report
