@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Styles spécifiques aux clients mail */
+        body {
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+            background-color: #f4f4f7;
+            color: #2D2438;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            background-color: #f4f4f7;
+            padding: 40px 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #1A0B2E; /* Fond sombre royal */
+            color: #D4AF37;
+        }
+        .logo {
+            font-size: 26px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin: 0;
+        }
+        .content {
+            padding: 40px 50px;
+            line-height: 1.8;
+            color: #333333;
+        }
+        h1 {
+            font-size: 22px;
+            color: #1A0B2E;
+            font-weight: normal;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        p {
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        .highlight-box {
+            background-color: #FAF9F6;
+            border: 1px solid #EAE7E0;
+            padding: 20px;
+            border-radius: 6px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .footer {
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            padding: 30px;
+            background-color: #FAF9F6;
+        }
+        .signature {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            font-size: 15px;
+        }
+        .gold-text {
+            color: #B8860B;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <div class="logo">Ton Cosmos</div>
+            </div>
+            
+            <div class="content">
+                <h1>Bonjour {{ full_name }},</h1>
+                
+                <p>Nous avons le plaisir de vous annoncer que l'analyse approfondie de votre configuration céleste est terminée.</p>
+                
+                <p>Nos algorithmes ont fini de traiter les données précises de votre naissance pour générer votre <strong>Rapport Natal Haute Définition</strong>. Ce document de plus de 50 pages constitue une cartographie complète des énergies qui structurent votre personnalité, vos ambitions professionnelles et votre dynamique relationnelle.</p>
+                
+                <div class="highlight-box">
+                    <p style="margin:0;">✨ <strong>Votre rapport est disponible en pièce jointe (PDF).</strong></p>
+                </div>
+                
+                <p>L'astrologie est un outil de connaissance de soi. Nous vous invitons à parcourir ces pages lors d'un moment de calme, propice à la réflexion et à l'introspection.</p>
+                
+                <div class="signature">
+                    Bien chaleureusement,<br><br>
+                    <strong>Indira</strong><br>
+                    <em>Conseillère Ton Cosmos</em>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>&copy; {{ current_year }} JVN Lab — Ton Cosmos</p>
+                <p style="font-size: 11px;">Cet email vous a été envoyé suite à votre commande. Pour toute question, notre support est à votre disposition.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

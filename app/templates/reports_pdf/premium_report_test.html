@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        /* --- Configuration de la Page --- */
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @bottom-center {
+                content: "— " counter(page) " —";
+                font-family: 'Cormorant Garamond', serif;
+                font-size: 10pt;
+                color: #999;
+            }
+        }
+
+        :root {
+            --dark: #1a1a1a;
+            --gold: #e79d12;
+            --soft-gold: #e5d1ae;
+            --light-grey: #f9f9f9;
+            --border-color: #e8e8e8;
+            --text: #3d3d3d;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        /* --- Utilitaires --- */
+        .page-break { page-break-after: always; }
+        .text-center { text-align: center; }
+
+        /* --- Couverture --- */
+        .cover {
+            height: 25cm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--gold);
+            padding: 1cm 1.5cm 0.8cm;
+        }
+
+        .cover-header {
+            text-transform: uppercase;
+            letter-spacing: 8px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12pt;
+            color: var(--gold);
+        }
+
+        .cover-main h1 {
+            font-size: 55pt;
+            font-weight: 300;
+            margin: 0;
+            color: var(--dark);
+            text-align: center;
+        }
+
+        .cover-footer {
+            border-top: 1px solid var(--gold);
+            padding-top: 1cm;
+            width: 100%;
+            text-align: center;
+        }
+
+        .user-name {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 18pt;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+
+        /* --- Sommaire / Intro --- */
+        .chart-section {
+            text-align: center;
+            margin: 2cm 0;
+        }
+
+        .chart-img {
+            width: 14cm;
+            height: 14cm;
+            border-radius: 50%;
+            border: 1pt solid var(--soft-gold);
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fafafa;
+            color: var(--gold);
+            font-style: italic;
+        }
+
+        .chart-img-container {
+            position: relative;
+            margin: 2cm auto;
+            width: 14cm;
+        }
+
+        /* --- Structure du Contenu --- */
+        .section-title {
+            font-size: 22pt;
+            color: var(--dark);
+            border-bottom: 0.5pt solid var(--gold);
+            margin-bottom: 1.5cm;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .section-title-theme {
+            font-size: 22pt;
+            color: var(--dark);
+            border-bottom: 0.5pt solid var(--gold);
+            margin: 2cm 0 1.5cm
+            margin-bottom: 1.5cm;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .block-container {
+            margin-bottom: 2.5rem;
+            page-break-inside: avoid;
+        }
+
+        .block-subtitle {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 11pt;
+            text-transform: uppercase;
+            color: var(--gold);
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .paragraph {
+            font-size: 13pt;
+            margin-bottom: 1rem;
+            text-align: justify;
+            hyphens: auto;
+        }
+
+        .summary-box {
+            background-color: #fcfaf7;
+            padding: 2rem;
+            margin-top: 1.5cm;
+            border: 0.5pt solid var(--soft-gold);
+            position: relative;
+        }
+
+        .summary-box strong {
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            font-size: 9pt;
+            letter-spacing: 1px;
+            color: var(--gold);
+        }
+
+        .badge {
+            background: var(--gold);
+            color: white;
+            padding: 3px 10px;
+            font-size: 8pt;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- Cartes Planétaires (Grid) --- */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 1cm;
+        }
+
+        .card {
+            padding: 25px;
+            background: var(--light-grey);
+            border: 0.5pt solid var(--border-color);
+            border-left: 4pt solid var(--gold);
+            transition: all 0.3s ease;
+        }
+
+        .card strong {
+            display: block;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 8pt;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 16pt;
+            color: var(--dark);
+            font-weight: 400;
+        }
+
+        /* --- Tableaux Épurés --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1cm 0 0;
+        }
+
+        th {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 400;
+            text-transform: uppercase;
+            font-size: 7.5pt;
+            letter-spacing: 2px;
+            color: #888;
+            padding: 15px;
+            border-bottom: 1px solid var(--gold);
+            text-align: left;
+        }
+
+        td {
+            padding: 15px;
+            font-size: 11pt;
+            border-bottom: 0.5pt solid var(--border-color);
+        }
+
+        tr:nth-child(even) { background-color: #fafafa; }
+    </style>
+</head>
+<body>
+
+    <!-- PAGE DE COUVERTURE -->
+    <div class="cover">
+        <div
+            class="cover-header"
+            style="text-transform: uppercase; letter-spacing: 8px; font-family: 'Montserrat', sans-serif; font-size: 12pt; color: '#e79d12';"
+        >
+            Indira Astrology
+        </div>
+        
+        <div class="cover-main">
+            <h1>L'Équilibre du<br>Cosmos</h1>
+            <p class="text-center" style="font-size: 18pt; color: var(--gold);">— Votre Thème Natal —</p>
+        </div>
+
+        <div class="cover-footer">
+            <div class="user-name">Alexandre Dumas</div>
+            <p style="font-size: 11pt; color: #666;">
+                24 Juillet 1992 — Avenue Thierry, Résidence de la Brosse, Ville-d'Avray, Boulogne-Billancourt, Hauts-de-Seine, Île-de-France, France métropolitaine, 92410, France<br>
+                Généré le 4 Mai 2026
+            </p>
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- CARTE DU CIEL -->
+    <div class="chart-section">
+        <h2 style="font-family: 'Montserrat'; font-weight: 300; letter-spacing: 4px; margin-bottom: 2.5rem;">VOTRE CARTE DU CIEL</h2>
+        <div class="chart-img">
+            <img src="https://thumbs.dreamstime.com/b/une-image-sur-le-th%C3%A8me-c%C3%A9leste-pr%C3%A9sente-carte-astrologique-complexe-superpos%C3%A9e-%C3%A0-un-412848781.jpg" class="chart-img" >
+        </div>
+        <p style="max-width: 60%; margin: 1.5cm auto; font-style: italic; color: #555; font-size: 14pt;">
+            "Le ciel au moment de votre premier souffle est une empreinte unique, une carte de votre potentiel infini."
+        </p>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- SECTION I : POSITIONS PLANÉTAIRES -->
+    <div class="section">
+        <h2 class="section-title">I. Positions Planétaires</h2>
+
+        <div class="grid-2">
+            <div class="card"><strong>Soleil</strong><p>Sagittaire — 4.8°</p></div>
+            <div class="card"><strong>Lune</strong><p>Bélier — 19.07°</p></div>
+            <div class="card"><strong>Mercure</strong><p>Sagittaire — 0.37°</p></div>
+            <div class="card"><strong>Vénus</strong><p>Scorpion — 23.13°</p></div>
+            <div class="card"><strong>Mars</strong><p>Verseau — 21.36°</p></div>
+            <div class="card"><strong>Jupiter</strong><p>Cancer — 14.71°</p></div>
+            <div class="card"><strong>Saturne</strong><p>Gémeaux — 12.02°</p></div>
+            <div class="card"><strong>Uranus</strong><p>Verseau — 21.22°</p></div>
+            <div class="card"><strong>Neptune</strong><p>Verseau — 6.44°</p></div>
+            <div class="card"><strong>Pluton</strong><p>Sagittaire — 14.71°</p></div>
+        </div>
+
+        <div class="summary-box">
+           <strong>Qu'est-ce que les "Positions Planétaires" ? :</strong> Les Positions Planétaires représentent la cartographie exacte du ciel au moment précis de votre naissance.
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- SECTION II : MAISONS -->
+    <div class="section">
+        <h2 class="section-title">II. Maisons Astrologiques</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Maison</th>
+                    <th>Signe du Zodiaque</th>
+                    <th style="text-align:right">Position Exacte</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Maison I (AS)</td><td>Vierge</td><td style="text-align:right">14.34°</td></tr>
+                <tr><td>Maison II</td><td>Balance</td><td style="text-align:right">6.95°</td></tr>
+                <tr><td>Maison III</td><td>Scorpion</td><td style="text-align:right">5.54°</td></tr>
+                <tr><td>Maison IV (FC)</td><td>Sagittaire</td><td style="text-align:right">10.12°</td></tr>
+                <tr><td>Maison V</td><td>Capricorne</td><td style="text-align:right">16.48°</td></tr>
+                <tr><td>Maison VI</td><td>Verseau</td><td style="text-align:right">18.25°</td></tr>
+                <tr><td>Maison VII (DS)</td><td>Poissons</td><td style="text-align:right">14.34°</td></tr>
+                <tr><td>Maison VIII</td><td>Bélier</td><td style="text-align:right">6.95°</td></tr>
+                <tr><td>Maison IX</td><td>Taureau</td><td style="text-align:right">5.54°</td></tr>
+                <tr><td>Maison X (MC)</td><td>Gémeaux</td><td style="text-align:right">10.12°</td></tr>
+                <tr><td>Maison XI</td><td>Cancer</td><td style="text-align:right">16.48°</td></tr>
+                <tr><td>Maison XII</td><td>Lion</td><td style="text-align:right">18.25°</td></tr>
+            </tbody>
+        </table>
+
+        <div class="summary-box">
+            <strong>Qu'est-ce que les "Maisons Astrologiques" ? :</strong> Les maisons représentent les différents secteurs de votre existence (vie sociale, foyer, travail).
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- SECTION III : ASPECTS -->
+    <div class="section">
+        <h2 class="section-title">III. Analyse des Aspects</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Interaction</th>
+                    <th>Type d'Aspect</th>
+                    <th style="text-align:right">Orbe / Intensité</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Soleil - Mercure</td><td><span class="badge">Conjonction</span></td><td style="text-align:right">4.43°</td></tr>
+                <tr><td>Soleil - Neptune</td><td>Sextile</td><td style="text-align:right">1.63°</td></tr>
+                <tr><td>Mars - Uranus</td><td><span class="badge" style="background:var(--gold); color:white;">Conjonction Majeure</span></td><td style="text-align:right">0.14°</td></tr>
+                <tr><td>Lune - Mars</td><td>Sextile</td><td style="text-align:right">2.29°</td></tr>
+                <tr><td>Vénus - Mars</td><td>Carré</td><td style="text-align:right">1.77°</td></tr>
+                <tr><td>Saturne - Pluton</td><td>Opposition</td><td style="text-align:right">2.69°</td></tr>
+            </tbody>
+        </table>
+        
+        <div class="summary-box">
+            <p style="font-style: italic; color: #888;">Les interactions géométriques qui définissent votre psyché.</p>
+            <strong>À propos des Aspects :</strong> Les aspects représentent les "conversations" entre vos planètes. <br/> L'<strong>Orbe</strong> indique la précision de l'aspect : plus le chiffre est proche de 0.00°, plus l'influence de cette interaction est puissante et structurante dans votre caractère. Les aspects dits "majeurs" tracent les lignes de force de votre destin.
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- SECTION IV : FORECAST -->
+    <div class="section">
+        <h2 class="section-title">IV. Calendrier Lunaire & Transits</h2>
+        <table class="forecast-table">
+            <thead>
+                <tr>
+                    <th>Période 2026/27</th>
+                    <th>Jupiter</th>
+                    <th>Saturne</th>
+                    <th>Pluton</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Juin 2026</td><td>Cancer</td><td>Bélier</td><td>Verseau</td></tr>
+                <tr><td>Juillet 2026</td><td>Lion</td><td>Bélier</td><td>Verseau</td></tr>
+                <tr><td>Janvier 2027</td><td>Lion</td><td>Bélier</td><td>Verseau</td></tr>
+                <tr><td>Avril 2027</td><td>Lion</td><td>Bélier</td><td>Verseau</td></tr>
+            </tbody>
+        </table>
+        
+        <div class="summary-box">
+            <strong>Note de l'Astrologue :</strong> La concentration de planètes en Verseau (Mars, Uranus, Neptune) durant cette période suggère une phase d'innovation personnelle majeure et de rupture avec les anciens schémas.
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- SECTION V : Essence Astrale -->
+    <div class="section">
+        <h2 class="section-title">V. Votre Essence Astrale</h2>
+
+        <div class="block-container">
+            <span class="block-subtitle">Le Soleil en Lion : La Force Rayonnante</span>
+            <p class="paragraph">
+                Votre Soleil brille dans le signe du Lion, ce qui vous confère une présence naturelle et une vitalité remarquable. Vous portez en vous un besoin de création et d'expression personnelle qui ne demande qu'à s'épanouir. Ce placement indique une âme généreuse, dotée d'une grande loyauté envers ceux qu'elle aime.
+            </p>
+            <p class="paragraph">
+                Cependant, cette lumière demande à être canalisée avec sagesse. Votre défi consiste à briller non pas pour dominer, mais pour éclairer le chemin des autres, en transformant votre fierté naturelle en une confiance tranquille et inspirante.
+            </p>
+        </div>
+
+        <div class="block-container">
+            <span class="block-subtitle">L'Ascendant Sagittaire : L'Élan vers l'Inconnu</span>
+            <p class="paragraph">
+                Avec un Ascendant Sagittaire, votre premier contact avec le monde est marqué par l'optimisme et une soif inextinguible de découverte. On vous perçoit comme une personne en quête de sens, toujours prête à repousser les frontières de la connaissance ou de l'expérience géographique.
+            </p>
+        </div>
+
+        <div class="summary-box">
+            <strong>L'Essence d'Indira :</strong> Vous êtes une âme de feu, destinée à explorer les sommets de la conscience tout en restant ancrée dans la noblesse de cœur.
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- SECTION VI : Amour & Relations -->
+    <div class="section">
+        <h2 class="section-title">VI. Amour & Relations</h2>
+
+        <div class="block-container">
+            <span class="block-subtitle">Vénus en Gémeaux : La Curiosité du Cœur</span>
+            <p class="paragraph">
+                En amour, vous avez besoin de stimulation intellectuelle. La communication est, pour vous, le plus puissant des aphrodisiaques. Vous cherchez un partenaire capable de suivre le rythme de vos pensées et de partager vos multiples centres d'intérêt.
+            </p>
+        </div>
+    </div>
+    <div class="page-break"></div>
+</body>
+</html>
