@@ -1,3 +1,4 @@
+import os
 import sys
 import asyncio
 from logging.config import fileConfig
@@ -13,7 +14,14 @@ from app.database.base import Base
 
 config = context.config
 
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME", "postgres")
+
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -40,7 +48,7 @@ def do_run_migrations(connection):
 
 async def run_migrations_online() -> None:
     connectable = create_async_engine(
-        settings.DATABASE_URL,
+        config.get_main_option("sqlalchemy.url"),
         poolclass=pool.NullPool,
         connect_args={
             "prepared_statement_cache_size": 0,
