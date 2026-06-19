@@ -114,7 +114,7 @@ class AstrologyService:
         
         def get_diff(jd):
             res = swe.calc_ut(jd, swe.SUN)
-            sun_lon = res[0]
+            sun_lon = self._extract_lon(res)
             diff = sun_lon - natal_sun_lon
             return (diff + 180) % 360 - 180
             
@@ -291,7 +291,7 @@ class AstrologyService:
             
             while jd <= jd_end:
                 res = swe.calc_ut(jd, swe.SATURN)
-                sat_lon = res[0]
+                sat_lon = self._extract_lon(res)
                 diff = (sat_lon - natal_saturn_lon + 180) % 360 - 180
                 
                 if prev_diff is not None:
@@ -303,7 +303,7 @@ class AstrologyService:
                         for _ in range(30):
                             c = (a + b) / 2.0
                             res_c = swe.calc_ut(c, swe.SATURN)
-                            fc = (res_c[0] - natal_saturn_lon + 180) % 360 - 180
+                            fc = (self._extract_lon(res_c) - natal_saturn_lon + 180) % 360 - 180
                             if abs(fc) < 1e-6:
                                 a = b = c
                                 break
