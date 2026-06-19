@@ -66,6 +66,9 @@ async def create_checkout(body: OrderRequest):
             message="Session de paiement créée",
             data={"checkout_url": session.url, "session_id": session.id}
         )
+    except HTTPException as he:
+        logger.error(f"HTTPException Stripe Session: {he.detail}")
+        return ServiceResponse.error(message=he.detail, status_code=he.status_code)
     except Exception as e:
         logger.error(f"Erreur Stripe Session: {e}")
         return ServiceResponse.error(message="Erreur lors de la création du paiement", status_code=500)
