@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Date, Time, Enum as SqlEnum, Float, DateTime
+from sqlalchemy import Column, Integer, String, Date, Time, Enum as SqlEnum, Float, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.base import Base
@@ -17,6 +17,8 @@ class OrderStatus(str, enum.Enum):
 class PlanType(str, enum.Enum):
     ESSENTIEL = "essentiel"  # 9,90€
     COMPLET = "complet"    # 19,90€
+    ANNEE_COSMIQUE = "annee_cosmique"
+    COSMOS_INTEGRAL = "cosmos_integral"
 
 
 # Représente une commande utilisateur.
@@ -42,6 +44,8 @@ class Order(Base):
     plan_type = Column(SqlEnum(PlanType, name="plan_type_enum"), nullable=True)
     status = Column(SqlEnum(OrderStatus, name="order_status_enum"), default=OrderStatus.PENDING_PAYMENT,)
     amount_total = Column(Integer, nullable=False, default=0)
+    has_audio = Column(Boolean, default=False, nullable=False)
+    has_poster = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
