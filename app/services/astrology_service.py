@@ -201,8 +201,8 @@ class AstrologyService:
             
             for tp_name, tp_id in transiting_pids.items():
                 res = swe.calc_ut(jd, tp_id)
-                tp_lon = res[0]
-                tp_speed = res[3]
+                tp_lon = self._extract_lon(res)
+                tp_speed = float(res[0][3]) if isinstance(res[0], (list, tuple)) else float(res[3])
                 
                 if tp_name in prev_speeds:
                     prev_sp = prev_speeds[tp_name]
