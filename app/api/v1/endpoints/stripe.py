@@ -42,10 +42,12 @@ astrology_service = AstrologyService()
 
 
 class OrderRequest(BaseModel):
-    plan_type: str  # "essentiel" | "complet"
+    plan_type: str
     order_id: int
     amount_total: int
     email: str
+    has_audio: bool = False
+    has_poster: bool = False
 
 
 @router.post("/create-checkout-session")
@@ -55,13 +57,18 @@ async def create_checkout(body: OrderRequest):
             plan_type=body.plan_type,
             amount_total=body.amount_total,
             order_id=body.order_id,
-            user_email=body.email
+            user_email=body.email,
+            has_audio=body.has_audio,
+            has_poster=body.has_poster
         )
         
         return ServiceResponse.success(
             message="Session de paiement créée",
             data={"checkout_url": session.url, "session_id": session.id}
         )
+    except HTTPException as he:
+        logger.error(f"HTTPException Stripe Session: {he.detail}")
+        return ServiceResponse.error(message=he.detail, status_code=he.status_code)
     except Exception as e:
         logger.error(f"Erreur Stripe Session: {e}")
         return ServiceResponse.error(message="Erreur lors de la création du paiement", status_code=500)
@@ -77,15 +84,24 @@ async def websocket_endpoint_for_check_steps(websocket: WebSocket, session_id: s
         manager.disconnect(session_id, websocket)
 
 
-@router.websocket("/order/ws/order-status-for-admin")
-async def websocket_endpoint_for_check_new_event(websocket: WebSocket):
-    admin_socket_session = "order-status-for-admin"
-    await manager.connect(admin_socket_session, websocket)
+@router.websocket("/ws/order-status-for-admin")
+async def admin_order_status_ws(websocket: WebSocket):
+    await manager.connect("admin-order-status", websocket)
     try:
         while True:
-            await websocket.receive_text() 
+            await websocket.receive_text()
     except WebSocketDisconnect:
-        manager.disconnect(admin_socket_session, websocket)
+        manager.disconnect("admin-order-status", websocket)
+
+
+@router.websocket("/order/ws/order-status-for-admin")
+async def admin_order_status_ws_secondary(websocket: WebSocket):
+    await manager.connect("admin-order-status", websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect("admin-order-status", websocket)
 
 
 @router.post("/webhook")
@@ -114,10 +130,11 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
     order_id = metadata.get("order_id")
     payment_status = session.get("payment_status")
     amount_paid = session.get("amount_total")
-
-    logger.info(f"DEBUG: Session={session_id} | Order={order_id} | Status={payment_status} | Amount={amount_paid}")
     
-    VALID_AMOUNTS = {990, 1990}
+    has_audio = metadata.get("has_audio") == "true" or metadata.get("has_audio") is True
+    has_poster = metadata.get("has_poster") == "true" or metadata.get("has_poster") is True
+
+    logger.info(f"DEBUG: Session={session_id} | Order={order_id} | Status={payment_status} | Amount={amount_paid} | Audio={has_audio} | Poster={has_poster}")
 
     if not session_id or not order_id:
         logger.warning("Missing data: session_id or order_id in metadata")
@@ -127,15 +144,9 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
         logger.info(f"Paiement non finalisé. Status: {payment_status}")
         return {"status": "not_paid"}
 
-    if amount_paid not in VALID_AMOUNTS:
-        logger.warning(f"Montant incohérent pour la commande {order_id}. Reçu: {amount_paid}")
-        return {"status": "invalid_amount"}
-
     try:
         logger.info(f"Validation commande {order_id} lancée en arrière-plan...")
-        
-        background_tasks.add_task(process_order_pipeline, int(order_id), session_id, False)
-        
+        background_tasks.add_task(process_order_pipeline, int(order_id), session_id, False, has_audio, has_poster)
     except ValueError:
         logger.error(f"Erreur: order_id '{order_id}' n'est pas un nombre valide.")
         return {"status": "invalid_id"}
@@ -152,17 +163,22 @@ async def resend_email(order_id: int, background_tasks: BackgroundTasks, db: Asy
         return ServiceResponse.error(message="Commande non trouvée", status_code=404)
 
     background_tasks.add_task(process_order_pipeline, order_id, None, True)
-    
     return ServiceResponse.success(message="Le processus de génération et d'envoi a été relancé.")
 
     
-async def process_order_pipeline(order_id: int, stripe_session_id: str | None = None, resend: bool = False):
+async def process_order_pipeline(
+    order_id: int,
+    stripe_session_id: str | None = None,
+    resend: bool = False,
+    has_audio: bool = False,
+    has_poster: bool = False
+):
+    admin_ws = "admin-order-status"
+    socket_session_id = f"ton-cosmos-{order_id}"
+
     async with SessionLocal() as db:
         order_repo = OrderRepository(db)
         report_repo = ReportRepository(db)
-
-        admin_ws = "order-status-for-admin"
-        socket_session_id = f"ton-cosmos-{order_id}"
 
         try:
             order = await order_repo.get_by_id(order_id)
@@ -170,7 +186,17 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
                 logger.error(f"Order {order_id} not found")
                 return
 
-            # éviter double traitement Stripe
+            # Update flags
+            if not resend:
+                order.has_audio = has_audio
+                order.has_poster = has_poster
+                await db.commit()
+                await db.refresh(order)
+            else:
+                has_audio = order.has_audio
+                has_poster = order.has_poster
+
+            # Éviter double traitement Stripe
             if not resend and stripe_session_id:
                 existing = await order_repo.get_by_stripe_session(stripe_session_id)
                 if existing and existing.status == OrderStatus.COMPLETED:
@@ -198,19 +224,38 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
                 )
                 await db.commit()
 
-            # CHART
-            chart = report.astral_data_json
+            # Extraction safe des données nécessaires avant les appels asynchrones longs
+            chart = report.astral_data_json or {}
+            plan_type_str = str(order.plan_type.value if hasattr(order.plan_type, "value") else order.plan_type or "essentiel").lower()
+            order_email = order.email
+            order_full_name = order.full_name
+            order_birth_date = order.birth_date
+            order_birth_time = order.birth_time
+            order_timezone = order.timezone
+            order_latitude = order.latitude
+            order_longitude = order.longitude
+            order_birth_city = order.birth_city
 
             if not chart:
-                tz_name = order.timezone or "UTC"
+                tz_name = order_timezone or "UTC"
                 chart = await astrology_service.get_full_chart(
-                    b_date=order.birth_date,
-                    b_time=order.birth_time or time(12, 0),
+                    b_date=order_birth_date,
+                    b_time=order_birth_time or time(12, 0),
                     tz_name=tz_name,
-                    lat=order.latitude,
-                    lon=order.longitude
+                    lat=order_latitude,
+                    lon=order_longitude
                 )
 
+            if "forecast_detailed" not in chart and plan_type_str in ("annee_cosmique", "cosmos_integral"):
+                tz_name = order_timezone or "UTC"
+                forecast_detailed = await astrology_service.get_forecast_chart(
+                    b_date=order_birth_date,
+                    b_time=order_birth_time or time(12, 0),
+                    tz_name=tz_name,
+                    lat=order_latitude,
+                    lon=order_longitude
+                )
+                chart["forecast_detailed"] = forecast_detailed
                 await report_repo.update_astral_data_json(report.id, chart)
                 await db.commit()
 
@@ -223,17 +268,18 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
             ai_content = report.ai_content_json
 
             if not ai_content:
-                sections = [
-                    "introduction", "piliers", "mental", "dominantes",
-                    "maisons_vie_1", "maisons_vie_2",
-                    "amour", "mission", "destin",
-                    "conseils", "synthese"
-                ]
+                if plan_type_str == "essentiel":
+                    sections = ["introduction", "piliers", "mental", "dominantes", "maisons_vie_1", "maisons_vie_2", "amour", "mission", "destin", "conseils", "synthese"]
+                elif plan_type_str == "complet":
+                    sections = ["introduction", "piliers", "mental", "dominantes", "maisons_vie_1", "maisons_vie_2", "amour", "mission", "ombres", "aspects_majeurs", "predictions", "destin", "conseils", "synthese"]
+                elif plan_type_str == "annee_cosmique":
+                    sections = ["introduction", "piliers", "mental", "dominantes", "maisons_vie_1", "maisons_vie_2", "amour", "mission", "predictions_detailed", "destin", "conseils", "synthese"]
+                elif plan_type_str == "cosmos_integral":
+                    sections = ["introduction", "piliers", "mental", "dominantes", "maisons_vie_1", "maisons_vie_2", "amour", "mission", "ombres", "aspects_majeurs", "predictions_detailed", "karma", "destin", "conseils", "synthese"]
+                else:
+                    sections = ["introduction", "piliers", "mental", "dominantes", "maisons_vie_1", "maisons_vie_2", "amour", "mission", "destin", "conseils", "synthese"]
 
-                if order.plan_type.lower() == "complet":
-                    sections[8:8] = ["ombres", "aspects_majeurs", "predictions"]
-
-                semaphore = asyncio.Semaphore(5)
+                semaphore = asyncio.Semaphore(3)  # Descendu à 3 pour éviter les surcharges de rate-limit concurrents
 
                 async def fetch_section(section_id):
                     for attempt in range(15):
@@ -241,7 +287,7 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
                             try:
                                 print(f"Analyse IA pour = {section_id} (Essai {attempt + 1}/15)")
                                 return await ai_service.generate_astrology_report(
-                                    chart, order.full_name, section_id
+                                    chart, order_full_name, section_id
                                 )
                             except Exception as e:
                                 if "429" in str(e) or "rate_limit" in str(e).lower():
@@ -249,7 +295,7 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
                                     print(f"Rate limit sur {section_id}. Pause de {wait_time}s...")
                                     await asyncio.sleep(wait_time)
                                     continue
-                                logger.error(f"Erreur critique section {section_id}: {e}")
+                                logger.error(f"Erreur section {section_id}: {e}")
                                 raise e
                     raise Exception(f"Rate limit persistant sur la section {section_id} après 15 essais.")
 
@@ -262,22 +308,86 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
 
             await manager.send_update(socket_session_id, {"step": 3, "status": True})
 
-            # PDF
+            # SECURE AUDIO GENERATION
+            if has_audio and not report.audio_url:
+                await manager.send_update(socket_session_id, {"step": 4, "status": "generating_audio"})
+                try:
+                    from app.services.tts_service import TTSService
+                    tts = TTSService()
+                    tts_text_parts = []
+                    for s in ai_content.get("sections", []):
+                        for block in s.get("blocks", []):
+                            for p in block.get("paragraphs", []):
+                                if p:
+                                    tts_text_parts.append(p)
+                    text_for_tts = " ".join(tts_text_parts)[:4500]
+                    audio_filename = f"audio-{order_id}.mp3"
+                    audio_url = await tts.generate_speech(text_for_tts, audio_filename)
+                    report = await report_repo.update_asset_urls(report.id, audio_url=audio_url)
+                    await db.commit()
+                except Exception as audio_err:
+                    logger.error(f"Erreur lors de la génération de l'audio TTS : {audio_err}")
+
+            # SECURE HD POSTER GENERATION
+            if has_poster and not report.poster_url:
+                await manager.send_update(socket_session_id, {"step": 4, "status": "generating_poster"})
+                try:
+                    from app.services.storage_service import StorageService
+                    storage = StorageService()
+                    safe_name = order_full_name.replace(" ", "-") if order_full_name else "user"
+                    poster_filename = f"poster-{safe_name}-{order_id}.pdf"
+                    
+                    await pdf_service.generate_astrological_report(
+                        template_name="hd_poster",
+                        data={
+                            "full_name": order_full_name,
+                            "svg_map": svg_map,
+                            "birth_date_info": f"{order_birth_date} {order_birth_time or '12:00'}",
+                            "birth_city": order_birth_city,
+                            "latitude": order_latitude,
+                            "longitude": order_longitude
+                        },
+                        output_filename=poster_filename
+                    )
+                    
+                    pdf_source_path = f"/app/static/reports/{poster_filename}"
+                    storage.save_file(pdf_source_path, poster_filename)
+                    signed_poster = storage.generate_signed_url(poster_filename)
+                    report = await report_repo.update_asset_urls(report.id, poster_url=signed_poster)
+                    await db.commit()
+                except Exception as poster_err:
+                    logger.error(f"Erreur lors de la génération du poster HD : {poster_err}")
+
+            # PDF MAIN REPORT
             pdf_url = report.pdf_url
 
             if not pdf_url:
-                safe_name = order.full_name.replace(" ", "-") if order.full_name else "user"
-                output_filename = f"report-{order.plan_type.lower()}-{safe_name}-{datetime.now().strftime('%Y%m%d')}.pdf"
+                safe_name = order_full_name.replace(" ", "-") if order_full_name else "user"
+                output_filename = f"report-{plan_type_str}-{safe_name}-{datetime.now().strftime('%Y%m%d')}.pdf"
+
+                if plan_type_str == "annee_cosmique":
+                    template_name = "annee_cosmique"
+                elif plan_type_str == "cosmos_integral":
+                    template_name = "cosmos_integral"
+                else:
+                    template_name = "premium_report"
 
                 pdf_url = await pdf_service.generate_astrological_report(
-                    template_name="premium_report",
+                    template_name=template_name,
                     data={
-                        "full_name": order.full_name,
+                        "full_name": order_full_name,
                         "svg_map": svg_map,
                         "birth_chart": chart.get("birth_chart", {}),
                         "ai_content": ai_content,
-                        "birth_date_info": f"{order.birth_date} {order.birth_time}",
-                        "forecast": chart.get("forecast", {})
+                        "birth_date_info": f"{order_birth_date} {order_birth_time or '12:00'}",
+                        "birth_city": order_birth_city,
+                        "latitude": order_latitude,
+                        "longitude": order_longitude,
+                        "forecast": chart.get("forecast", {}),
+                        "forecast_detailed": chart.get("forecast_detailed", {}),
+                        "forecast_data": chart.get("forecast_detailed", {}),
+                        "audio_url": report.audio_url,
+                        "poster_url": report.poster_url
                     },
                     output_filename=output_filename
                 )
@@ -292,11 +402,11 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
             file_path = pdf_url.replace("/reports/", "/app/static/reports/")
 
             email_result = await email_service.send_email(
-                to=order.email,
+                to=order_email,
                 subject="Ton Cosmos : Ton Rapport Astral est prêt !",
                 template_name="report_ready",
                 data={
-                    "full_name": order.full_name,
+                    "full_name": order_full_name,
                     "current_year": datetime.now().year
                 },
                 attachment_path=file_path,
@@ -306,7 +416,7 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
             if not email_result.get("success"):
                 raise Exception(email_result.get("message"))
 
-            await order_repo.update_status(order.id, OrderStatus.COMPLETED)
+            await order_repo.update_status(order_id, OrderStatus.COMPLETED)
             await manager.send_update(socket_session_id, {"step": 5, "status": True})
             await manager.send_update(admin_ws, {"order_id": order_id, "status": OrderStatus.COMPLETED})
             await db.commit()
@@ -331,4 +441,3 @@ async def process_order_pipeline(order_id: int, stripe_session_id: str | None = 
                 await manager.send_update(admin_ws, { "order_id": order_id, "status": OrderStatus.FAILED })
             except Exception as ws_err:
                 logger.error(f"Échec envoi WS erreur: {ws_err}")
-

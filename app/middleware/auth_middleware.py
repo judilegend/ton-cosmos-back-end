@@ -18,12 +18,16 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
 
+        # EMPECHE BaseHTTPMiddleware DE BLOQUER OU ROMPRE LES CONNEXIONS WEBSOCKET
+        if request.scope.get("type") == "websocket":
+            return await call_next(request)
+
         path = request.url.path
 
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        if path in self.public_paths or path.startswith(("/docs", "/redoc", "/openapi.json")):
+        if path in self.public_paths or path.startswith(("/docs", "/redoc", "/openapi.json", "/api/v1/storage/download")):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
@@ -129,4 +133,3 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 "message": message
             }
         )
-        

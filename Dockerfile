@@ -27,6 +27,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copier le projet
 COPY . .
 
+COPY ephe/ /usr/share/ephe/
+
+ENV SE_EPHE_PATH=/usr/share/ephe/
+
 RUN mkdir -p /app/static/reports
 
 # Exposer le port
