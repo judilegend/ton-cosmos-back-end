@@ -50,10 +50,9 @@ async def websocket_endpoint_for_check_new_event(websocket: WebSocket):
     await manager.connect(socket_admin_id, websocket)
     try:
         while True:
-            await websocket.receive_text() 
+            await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(socket_admin_id, websocket)
-        
 
 @router.post("/create", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_order(body: OrderPayload, db: AsyncSession = Depends(get_db)):
