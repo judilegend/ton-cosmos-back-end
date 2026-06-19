@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @bottom-center {
+                content: "— " counter(page) " —";
+                font-family: serif;
+                font-size: 10pt;
+                color: #999;
+            }
+        }
+
+        :root {
+            --dark: #1a1a1a;
+            --gold: #e79d12;
+            --soft-gold: #e5d1ae;
+            --light-grey: #f9f9f9;
+            --border-color: #e8e8e8;
+            --text: #3d3d3d;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            background: white;
+        }
+
+        .page-break { page-break-after: always; }
+        .text-center { text-align: center; }
+
+        /* Cover */
+        .cover {
+            height: 26cm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid var(--gold);
+            padding: 2cm;
+            box-sizing: border-box;
+        }
+
+        .cover-header {
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-size: 14pt;
+            color: var(--gold);
+        }
+
+        .cover-main h1 {
+            font-size: 38pt;
+            font-weight: normal;
+            margin: 0;
+            color: var(--dark);
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .user-name {
+            font-size: 22pt;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 2cm;
+            color: var(--dark);
+        }
+
+        .chart-section {
+            text-align: center;
+            margin: 2cm 0;
+        }
+
+        .chart-container svg {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .section-title {
+            font-size: 18pt;
+            color: var(--dark);
+            border-bottom: 1pt solid var(--gold);
+            margin-bottom: 0.8cm;
+            margin-top: 1cm;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .grid-2 { 
+            display: table;
+            width: 100%;
+            border-spacing: 10px;
+        }
+        
+        .card {
+            display: table-cell;
+            width: 50%;
+            padding: 12px;
+            background: var(--light-grey);
+            border-left: 3pt solid var(--gold);
+            vertical-align: top;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin: 1cm 0; }
+        th { text-align: left; padding: 10px; border-bottom: 1pt solid var(--gold); color: #888; font-size: 9pt; text-transform: uppercase; }
+        td { padding: 10px; border-bottom: 0.5pt solid var(--border-color); font-size: 11pt; }
+
+        .block-container { margin-bottom: 1.5cm; page-break-inside: avoid; }
+        .block-subtitle {
+            font-size: 14pt;
+            color: var(--gold);
+            margin-bottom: 8px;
+            display: block;
+            font-weight: bold;
+        }
+        .paragraph { margin-bottom: 12px; text-align: justify; }
+        .summary-box {
+            background-color: #fcfaf7;
+            padding: 20px;
+            border: 0.5pt solid var(--soft-gold);
+            font-style: italic;
+            margin-top: 1cm;
+        }
+
+        .media-box {
+            background-color: #f6f8fa;
+            border: 1px dashed var(--gold);
+            padding: 15px;
+            margin-top: 1.5cm;
+            border-radius: 4px;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+        .media-btn {
+            display: inline-block;
+            background-color: var(--gold);
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Cover Page -->
+    <div class="cover">
+        <div class="cover-header">Indira Astrology</div>
+        <div class="cover-main">
+            <h1>COSMOS<br>INTÉGRAL</h1>
+            <p class="text-center" style="color: var(--gold); font-size: 14pt; margin-top: 10px;">— Le Rapport Astral Suprême —</p>
+            <div class="user-name text-center">{{ full_name }}</div>
+        </div>
+        <div class="text-center">
+            <p>Né(e) le {{ birth_date_info }}</p>
+            <p style="font-size: 9pt; color: #999;">Analyse Intégrale (Natal, Karmique, Prévisions, Audio & Poster) — Généré le {{ generated_at }}</p>
+        </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Sky Map -->
+    <div class="chart-section">
+        <h2 style="font-family: 'Montserrat'; font-weight: 300; letter-spacing: 4px; margin-bottom: 2.5rem;">VOTRE CARTE DU CIEL</h2>
+        <div class="chart-container" style="width: 14cm; height: 14cm; margin: 0 auto; border-radius: 50%; overflow: hidden;">
+            {{ svg_map | safe }}
+        </div>
+        <p style="max-width: 60%; margin: 1.5cm auto; font-style: italic; color: #555; font-size: 14pt;">
+            "Le ciel au moment de votre premier souffle est une empreinte unique, une carte de votre potentiel infini."
+        </p>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Section I: Planetary Placements -->
+    <div class="section">
+        <h2 class="section-title">I. Positions Planétaires</h2>
+        <div class="grid-2">
+            {% if birth_chart and birth_chart.planets %}
+                {% for name, data in birth_chart.planets.items() %}
+                    <div class="card">
+                        <strong style="color: var(--gold); font-size: 9pt; text-transform: uppercase;">{{ name }}</strong><br>
+                        <span style="font-size: 12pt;">{{ data.sign }}</span> <br>
+                        <span style="color: #888; font-size: 10pt;">Position : {{ data.deg }}°</span>
+                    </div>
+                    {% if loop.index is even and not loop.last %}
+                        </div><div class="grid-2" style="margin-top: 10px;">
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Section II: Houses -->
+    <div class="section">
+        <h2 class="section-title">II. Maisons Astrologiques</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Maison</th>
+                    <th>Signe du Zodiaque</th>
+                    <th>Position Exacte</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if birth_chart and birth_chart.houses %}
+                    {% for num, data in birth_chart.houses.items() %}
+                    <tr>
+                        <td><strong>Maison {{ num }}</strong></td>
+                        <td>{{ data.sign }}</td>
+                        <td>{{ data.deg }}°</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Solar Return and Saturn Return Details if present -->
+    {% if forecast_data %}
+        {% if forecast_data.solar_return %}
+        <div class="section">
+            <h2 class="section-title">Informations de Révolution Solaire</h2>
+            <p>
+                Votre Révolution Solaire pour cette année se produit le : <strong>{{ forecast_data.solar_return.solar_return_datetime }} (UTC)</strong>.
+                L'Ascendant calculé pour votre Révolution Solaire est en <strong>{{ forecast_data.solar_return.ascendant.sign }}</strong> (à {{ forecast_data.solar_return.ascendant.deg }}°).
+            </p>
+        </div>
+        {% endif %}
+
+        {% if forecast_data.saturn_returns %}
+        <div class="section">
+            <h2 class="section-title">Timing des Retours de Saturne</h2>
+            <p>
+                Saturne retourne à sa position natale exacte aux périodes suivantes, marquant des étapes fondamentales de restructuration et d'évolution de vie :
+            </p>
+            <ul>
+                {% for ret in forecast_data.saturn_returns %}
+                <li>
+                    <strong>Retour de Saturne n°{{ ret.return_number }}</strong> (environ {{ ret.approximate_age_range }}) :
+                    {% for dt in ret.exact_dates %}
+                        {{ dt }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="page-break"></div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Section III: AI Content Chain -->
+    {% if ai_content and ai_content.sections %}
+        {% for section in ai_content.sections %}
+        <div class="section">
+            <h2 class="section-title">{{ section.title }}</h2>
+            
+            {% for block in section.blocks %}
+            <div class="block-container">
+                <span class="block-subtitle">{{ block.subtitle }}</span>
+                {% for para in block.paragraphs %}
+                    <p class="paragraph">{{ para }}</p>
+                {% endfor %}
+                
+                {% if block.conseil %}
+                    <p style="color: #444; font-size: 10.5pt; border-left: 2px solid var(--gold); padding-left: 15px; margin-top: 15px; font-style: italic;">
+                        <strong>Conseil :</strong> {{ block.conseil }}
+                    </p>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            {% if section.summary %}
+            <div class="summary-box">
+                <strong>L'Essence de cette analyse :</strong><br>
+                {{ section.summary }}
+            </div>
+            {% endif %}
+        </div>
+        <div class="page-break"></div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Section IV: Digital Assets Download Cards -->
+    {% if audio_url or poster_url %}
+    <div class="section">
+        <h2 class="section-title">Vos Suppléments Cosmos Intégral</h2>
+        <p>En tant qu'acheteur de la formule complète Cosmos Intégral, vous disposez d'un accès exclusif à vos suppléments numériques :</p>
+        
+        {% if audio_url %}
+        <div class="media-box">
+            <h3 style="margin:0; color: var(--gold);">Version Audio Guidée</h3>
+            <p style="font-size:10pt; color:#666; margin:5px 0;">Écoutez votre synthèse astrale personnalisée contée par la voix d'Indira.</p>
+            <a href="{{ audio_url }}" class="media-btn">Télécharger l'Audio (MP3)</a>
+        </div>
+        {% endif %}
+
+        {% if poster_url %}
+        <div class="media-box">
+            <h3 style="margin:0; color: var(--gold);">Poster de la Carte du Ciel HD</h3>
+            <p style="font-size:10pt; color:#666; margin:5px 0;">Téléchargez votre carte du ciel haute résolution au format vectoriel A3 pour l'impression.</p>
+            <a href="{{ poster_url }}" class="media-btn">Télécharger le Poster (PDF)</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</body>
+</html>
