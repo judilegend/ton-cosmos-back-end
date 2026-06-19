@@ -46,8 +46,23 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str
     STRIPE_PRICE_ID_ESSENTIAL: str
     STRIPE_PRICE_ID_PREMIUM: str
-    
+    STRIPE_PRICE_ID_ANNEE_COSMIQUE: str = ""
+    STRIPE_PRICE_ID_COSMOS_INTEGRAL: str = ""
+    STRIPE_PRICE_ID_AUDIO_BUMP: str = ""
+    STRIPE_PRICE_ID_POSTER: str = ""
+
     ANTHROPIC_API_KEY: str
+
+    # --- TTS ElevenLabs ---
+    ELEVENLABS_API_KEY: str = ""
+    ELEVENLABS_VOICE_ID: str = "21m00Tcm4TlvDq8ikWAM"
+
+    # --- Transit Orbs (degrés) ---
+    TRANSIT_ORB_CONJUNCTION: float = 5.0
+    TRANSIT_ORB_OPPOSITION: float = 5.0
+    TRANSIT_ORB_SQUARE: float = 5.0
+    TRANSIT_ORB_TRINE: float = 5.0
+    TRANSIT_ORB_SEXTILE: float = 4.0
 
     # Configuration du chargement des variables d'environnement
     model_config = SettingsConfigDict(
