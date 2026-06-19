@@ -87,6 +87,8 @@ class AIService:
             "ombres": "L'Espace de Guérison : Exploration des points sensibles. Ta blessure sacrée avec Chiron, tes désirs inconscients avec la Lune Noire et les héritages du passé.",
             "aspects_majeurs": "Le Dialogue des Astres : Analyse complexe des interactions géométriques majeures (Carrés, Trines, Oppositions). Tes défis intérieurs et tes dons innés.",
             "predictions": "Les Cycles à Venir : Analyse prospective détaillée des transits planétaires majeurs pour les 12 prochains mois et les opportunités de transformation à saisir.",
+            "predictions_detailed": "L'Année Cosmique : Vos prévisions détaillées mois par mois pour les 12 prochains mois. Pour chaque mois, tu dois ABSOLUMENT fournir des paragraphes pour l'Amour, la Carrière, l'Énergie, et les Finances, en te basant sur les transits et la Révolution Solaire.",
+            "karma": "La Boussole Karmique : Analyse évolutive et karmique profonde de ton Nœud Nord, de ta blessure sacrée avec ton Chiron natal (indique son signe/degré et sa maison, et la clé de guérison) et du timing de ton Retour de Saturne (première et deuxième occurrences).",
             "conseils": "Rituels et Harmonie : Actions concrètes, pratiques d'alignement et conseils holistiques pour incarner pleinement les énergies de ton thème.",
             "synthese": "L'Unité Retrouvée : Synthèse magistrale de ton ciel, message final de sagesse d'Indira et perspectives pour ton futur glorieux."
         }
