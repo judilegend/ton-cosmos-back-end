@@ -146,7 +146,7 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
 
     try:
         logger.info(f"Validation commande {order_id} lancée en arrière-plan...")
-        background_tasks.add_task(process_order_pipeline, int(order_id), session_id, False, has_audio, has_poster)
+        background_tasks.add_task(process_order_pipeline, int(order_id), session_id, False, has_audio, has_poster,amount_paid)
     except ValueError:
         logger.error(f"Erreur: order_id '{order_id}' n'est pas un nombre valide.")
         return {"status": "invalid_id"}
@@ -171,7 +171,8 @@ async def process_order_pipeline(
     stripe_session_id: str | None = None,
     resend: bool = False,
     has_audio: bool = False,
-    has_poster: bool = False
+    has_poster: bool = False,
+    amount_total: int | None = None  
 ):
     admin_ws = "admin-order-status"
     socket_session_id = f"ton-cosmos-{order_id}"
@@ -190,6 +191,8 @@ async def process_order_pipeline(
             if not resend:
                 order.has_audio = has_audio
                 order.has_poster = has_poster
+                if amount_total is not None:
+                    order.amount_total = amount_total
                 await db.commit()
                 await db.refresh(order)
             else:
