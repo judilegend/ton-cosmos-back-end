@@ -17,6 +17,8 @@ class AstrologicalReport(Base):
     # Fichier PDF final
     pdf_url = Column(String(512), nullable=True)
     pdf_name = Column(String(255), nullable=True)
+    audio_url = Column(String(512), nullable=True)
+    poster_url = Column(String(512), nullable=True)
     
     # Monitoring performance
     generation_duration = Column(Float, nullable=False, default=0)
