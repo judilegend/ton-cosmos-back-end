@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str
     CORS_ORIGINS: Union[List[str], str]
     FRONTEND_URL: str
+    BACKEND_URL: str = "http://localhost:8000"
 
     # --- Configuration Database (PostgreSQL) ---
     DB_HOST: str
