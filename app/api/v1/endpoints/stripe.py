@@ -2,7 +2,7 @@ import os
 import stripe
 import asyncio
 import logging
-from sqlalchemy import update
+from sqlalchemy import update, select
 from datetime import datetime, time, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from concurrent.futures import ProcessPoolExecutor
@@ -182,9 +182,18 @@ async def process_order_pipeline(
         report_repo = ReportRepository(db)
 
         try:
-            order = await order_repo.get_by_id(order_id)
+            # Verrouiller la commande en base de données pour éviter tout traitement concurrent
+            query = select(Order).filter(Order.id == order_id).with_for_update()
+            result = await db.execute(query)
+            order = result.scalars().first()
+            
             if not order:
                 logger.error(f"Order {order_id} not found")
+                return
+
+            # Vérifier l'état pour l'idempotence
+            if not resend and order.status in (OrderStatus.PROCESSING, OrderStatus.COMPLETED):
+                logger.info(f"Order {order_id} is already being processed or is completed. Skipping.")
                 return
 
             # Update flags
@@ -193,26 +202,18 @@ async def process_order_pipeline(
                 order.has_poster = has_poster
                 if amount_total is not None:
                     order.amount_total = amount_total
-                await db.commit()
-                await db.refresh(order)
             else:
                 has_audio = order.has_audio
                 has_poster = order.has_poster
 
-            # Éviter double traitement Stripe
-            if not resend and stripe_session_id:
-                existing = await order_repo.get_by_stripe_session(stripe_session_id)
-                if existing and existing.status == OrderStatus.COMPLETED:
-                    return
-
             loop = asyncio.get_running_loop()
             start_time = loop.time()
 
-            await order_repo.update_status(
-                order_id=order.id,
-                status=OrderStatus.PROCESSING,
-                stripe_session_id=stripe_session_id if not resend else None
-            )
+            # Mettre à jour le statut immédiatement en PROCESSING sous le même verrou
+            order.status = OrderStatus.PROCESSING
+            if not resend and stripe_session_id:
+                order.stripe_session_id = stripe_session_id
+            
             await db.commit()
             await db.refresh(order)
 
@@ -410,7 +411,9 @@ async def process_order_pipeline(
                 template_name="report_ready",
                 data={
                     "full_name": order_full_name,
-                    "current_year": datetime.now().year
+                    "current_year": datetime.now().year,
+                    "audio_url": report.audio_url,
+                    "poster_url": report.poster_url
                 },
                 attachment_path=file_path,
                 use_resend=False
