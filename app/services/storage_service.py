@@ -26,7 +26,7 @@ class StorageService:
         return dest_path
         
     def generate_signed_url(self, filename: str, expires_in: int = 604800) -> str:
-        """Generates a secure relative HMAC-signed URL that expires in expires_in seconds."""
+        """Generates a secure absolute HMAC-signed URL that expires in expires_in seconds."""
         expiration = int(time.time()) + expires_in
         message = f"{filename}:{expiration}"
         
@@ -36,7 +36,8 @@ class StorageService:
             hashlib.sha256
         ).hexdigest()
         
-        return f"/api/v1/storage/download/{filename}?expires={expiration}&signature={sig}"
+        backend_url = settings.BACKEND_URL.rstrip('/')
+        return f"{backend_url}/api/v1/storage/download/{filename}?expires={expiration}&signature={sig}"
 
     def verify_signature(self, filename: str, expires: int, signature: str) -> bool:
         """Verifies if the signature is valid and the URL has not expired."""
