@@ -82,6 +82,70 @@ class StripeService:
             )
 
     @staticmethod
+    async def create_subscription_checkout_session(
+        user_email: str,
+        full_name: str,
+        birth_date: str,
+        birth_time: Optional[str],
+        timezone: str,
+        birth_city: str,
+        latitude: float,
+        longitude: float
+    ) -> stripe.checkout.Session:
+        if not settings.STRIPE_PRICE_ID_CERCLE_COSMOS:
+            raise HTTPException(
+                status_code=400,
+                detail="Price ID Stripe pour l'abonnement Cercle Cosmos non configuré."
+            )
+        try:
+            session = stripe.checkout.Session.create(
+                mode="subscription",
+                payment_method_types=["card"],
+                customer_email=user_email,
+                metadata={
+                    "full_name": full_name,
+                    "birth_date": birth_date,
+                    "birth_time": birth_time or "",
+                    "timezone": timezone,
+                    "birth_city": birth_city,
+                    "latitude": str(latitude),
+                    "longitude": str(longitude),
+                    "is_subscription": "true"
+                },
+                line_items=[{"price": settings.STRIPE_PRICE_ID_CERCLE_COSMOS, "quantity": 1}],
+                success_url=f"{settings.FRONTEND_URL}/payments-success?subscription=success",
+                cancel_url=f"{settings.FRONTEND_URL}/payments",
+            )
+            return session
+        except stripe.error.StripeError as e:
+            print(f"STRIPE SUBSCRIPTION ERROR: {repr(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail=getattr(e, "user_message", "Erreur lors de la transaction d'abonnement avec Stripe")
+            )
+        except Exception as e:
+            print(f"INTERNAL STRIPE SUBSCRIPTION ERROR: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="Une erreur interne est survenue lors de la création de la session d'abonnement"
+            )
+
+    @staticmethod
+    async def create_portal_session(stripe_customer_id: str) -> stripe.billing_portal.Session:
+        try:
+            session = stripe.billing_portal.Session.create(
+                customer=stripe_customer_id,
+                return_url=f"{settings.FRONTEND_URL}/",
+            )
+            return session
+        except stripe.error.StripeError as e:
+            print(f"STRIPE PORTAL ERROR: {repr(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail=getattr(e, "user_message", "Erreur lors de l'accès au portail Stripe")
+            )
+
+    @staticmethod
     async def verify_webhook(payload: bytes, sig_header: str) -> Optional[stripe.Event]:
         try:
             event = stripe.Webhook.construct_event(
@@ -91,3 +155,4 @@ class StripeService:
         except (ValueError, stripe.error.SignatureVerificationError) as e:
             print(f"WEBHOOK ERROR: {str(e)}")
             return None
+

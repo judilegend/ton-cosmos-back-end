@@ -6,7 +6,7 @@ from app.core.config import settings
 from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
-##jkfkbnkvnbk
+
 class AIService:
     def __init__(self):
         self.client = anthropic.AsyncAnthropic(

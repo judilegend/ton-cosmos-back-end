@@ -12,14 +12,24 @@ from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from app.core.config import settings
 from app.database.session import engine
 from app.api.v1.router import api_router
+import asyncio
 from app.middleware.auth_middleware import AuthMiddleware
+from app.services.subscription_scheduler import SubscriptionScheduler
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Le schéma est géré exclusivement par les migrations Alembic.
     # Lancer : `alembic upgrade head` avant chaque déploiement.
+    scheduler = SubscriptionScheduler()
+    scheduler_task = asyncio.create_task(scheduler.start())
     yield
+    scheduler.is_running = False
+    scheduler_task.cancel()
+    try:
+        await scheduler_task
+    except asyncio.CancelledError:
+        pass
     await engine.dispose()
 
 
@@ -78,6 +88,9 @@ app.add_middleware(
         "/api/v1/order/test-chart",
         "/api/v1/stripe/order/ws/order-status-for-admin",
         "/api/v1/stripe/ws/order-status-for-admin",
+        "/api/v1/subscription/subscribe",
+        "/api/v1/subscription/create-portal-session",
+        "/api/v1/subscription/subscribe-from-order",
     ]
 )
 

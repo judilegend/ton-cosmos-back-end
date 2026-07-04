@@ -249,3 +249,8 @@ Pour approfondir les concepts de sécurité et les technologies utilisés dans c
 ---
 
 ## Fin du document - Dernière mise à jour : 04 Mai 2026 19:50
+
+
+
+
+…\ton-cosmos-back-end > .\venv\Scripts\pip.exe install pytest pytest-asyncio httpx

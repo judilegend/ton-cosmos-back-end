@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# Environnement virtuel Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Fichiers secrets — ne JAMAIS embarquer dans l'image
+.env
+.env.*
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Tests (pas nécessaires en prod)
+tests/
+test_*.py
+pytest.ini
+.pytest_cache/
+
+# Stripe CLI (binaire Windows, inutile dans l'image Linux)
+stripe.exe
+
+# Docs
+README.md
+*.md
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

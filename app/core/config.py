@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     STRIPE_PRICE_ID_COSMOS_INTEGRAL: str = ""
     STRIPE_PRICE_ID_AUDIO_BUMP: str = ""
     STRIPE_PRICE_ID_POSTER: str = ""
+    STRIPE_PRICE_ID_CERCLE_COSMOS: str = ""
 
     ANTHROPIC_API_KEY: str
 
