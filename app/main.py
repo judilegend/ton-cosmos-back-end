@@ -12,60 +12,24 @@ from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from app.core.config import settings
 from app.database.session import engine
 from app.api.v1.router import api_router
+import asyncio
 from app.middleware.auth_middleware import AuthMiddleware
-
-
-async def check_and_update_schema():
-    from sqlalchemy import text
-    try:
-        async with engine.connect() as conn:
-            # Check orders columns
-            res_orders = await conn.execute(text(
-                "SELECT column_name FROM information_schema.columns WHERE table_name='orders' AND column_name='has_audio'"
-            ))
-            if not res_orders.fetchone():
-                print("Adding 'has_audio' and 'has_poster' columns to 'orders' table...")
-                await conn.execute(text("ALTER TABLE orders ADD COLUMN has_audio BOOLEAN NOT NULL DEFAULT FALSE"))
-                await conn.execute(text("ALTER TABLE orders ADD COLUMN has_poster BOOLEAN NOT NULL DEFAULT FALSE"))
-                await conn.commit()
-                
-            # Check reports columns
-            res_reports = await conn.execute(text(
-                "SELECT column_name FROM information_schema.columns WHERE table_name='astrological_reports' AND column_name='audio_url'"
-            ))
-            if not res_reports.fetchone():
-                print("Adding 'audio_url' and 'poster_url' columns to 'astrological_reports' table...")
-                await conn.execute(text("ALTER TABLE astrological_reports ADD COLUMN audio_url VARCHAR(512)"))
-                await conn.execute(text("ALTER TABLE astrological_reports ADD COLUMN poster_url VARCHAR(512)"))
-                await conn.commit()
-
-            # Check enum labels
-            try:
-                res_enum = await conn.execute(text(
-                    "SELECT enumlabel FROM pg_enum JOIN pg_type ON pg_enum.enumtypid = pg_type.oid WHERE pg_type.typname = 'plan_type_enum' AND enumlabel = 'cosmos_integral'"
-                ))
-                if not res_enum.fetchone():
-                    print("Adding values to plan_type_enum...")
-                    async with engine.connect() as conn_ac:
-                        conn_ac = await conn_ac.execution_options(isolation_level="AUTOCOMMIT")
-                        try:
-                            await conn_ac.execute(text("ALTER TYPE plan_type_enum ADD VALUE 'annee_cosmique'"))
-                        except Exception as enum_err:
-                            print(f"Could not add 'annee_cosmique' to enum (might already exist): {enum_err}")
-                        try:
-                            await conn_ac.execute(text("ALTER TYPE plan_type_enum ADD VALUE 'cosmos_integral'"))
-                        except Exception as enum_err:
-                            print(f"Could not add 'cosmos_integral' to enum (might already exist): {enum_err}")
-            except Exception as e:
-                print(f"Error migrating enum: {e}")
-    except Exception as e:
-        print(f"Self-healing schema migration failed: {e}")
+from app.services.subscription_scheduler import SubscriptionScheduler
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await check_and_update_schema()
+    # Le schéma est géré exclusivement par les migrations Alembic.
+    # Lancer : `alembic upgrade head` avant chaque déploiement.
+    scheduler = SubscriptionScheduler()
+    scheduler_task = asyncio.create_task(scheduler.start())
     yield
+    scheduler.is_running = False
+    scheduler_task.cancel()
+    try:
+        await scheduler_task
+    except asyncio.CancelledError:
+        pass
     await engine.dispose()
 
 
@@ -78,7 +42,7 @@ app = FastAPI(
     redoc_url=None
 )
 
-REPORTS_DIR = "/app/static/reports"
+REPORTS_DIR = os.path.join(settings.STATIC_BASE, "reports")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 app.mount(
@@ -89,10 +53,10 @@ app.mount(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "stripe-signature"],
 )
 
 security = HTTPBasic()
@@ -124,6 +88,9 @@ app.add_middleware(
         "/api/v1/order/test-chart",
         "/api/v1/stripe/order/ws/order-status-for-admin",
         "/api/v1/stripe/ws/order-status-for-admin",
+        "/api/v1/subscription/subscribe",
+        "/api/v1/subscription/create-portal-session",
+        "/api/v1/subscription/subscribe-from-order",
     ]
 )
 

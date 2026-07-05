@@ -27,7 +27,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
-        if path in self.public_paths or path.startswith(("/docs", "/redoc", "/openapi.json", "/api/v1/storage/download")):
+        if path in self.public_paths or path.startswith(("/docs", "/redoc", "/openapi.json", "/api/v1/storage/download", "/api/v1/subscription/status", "/api/v1/subscription/subscribe-from-order/")):
             return await call_next(request)
 
         auth_header = request.headers.get("Authorization")
