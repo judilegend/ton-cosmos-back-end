@@ -8,8 +8,7 @@ from app.core.config import settings
 
 class StorageService:
     def __init__(self):
-        # Local secure storage path inside the container
-        self.local_dir = "/app/static/storage"
+        self.local_dir = os.path.join(settings.STATIC_BASE, "storage")
         os.makedirs(self.local_dir, exist_ok=True)
         
     def save_file(self, source_path: str, filename: str) -> str:
@@ -35,9 +34,9 @@ class StorageService:
             message.encode(),
             hashlib.sha256
         ).hexdigest()
-        
-        backend_url = settings.BACKEND_URL.rstrip('/')
-        return f"{backend_url}/api/v1/storage/download/{filename}?expires={expiration}&signature={sig}"
+
+        public_base_url = settings.PUBLIC_BASE_URL.strip().rstrip('/') if settings.PUBLIC_BASE_URL else settings.BACKEND_URL.rstrip('/')
+        return f"{public_base_url}/api/v1/storage/download/{filename}?expires={expiration}&signature={sig}"
 
     def verify_signature(self, filename: str, expires: int, signature: str) -> bool:
         """Verifies if the signature is valid and the URL has not expired."""
