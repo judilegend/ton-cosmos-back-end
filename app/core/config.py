@@ -4,7 +4,6 @@ from pydantic import computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    # --- Infos Application ---
     app_name: str = "FastAPI Async App"
     ENV: str = "development"
     debug: bool = True
@@ -16,8 +15,17 @@ class Settings(BaseSettings):
     CORS_ORIGINS: Union[List[str], str]
     FRONTEND_URL: str
     BACKEND_URL: str = "http://localhost:8000"
+    PUBLIC_BASE_URL: str = ""
+    STATIC_DIR: str = ""
 
-    # --- Configuration Database (PostgreSQL) ---
+    @computed_field
+    @property
+    def STATIC_BASE(self) -> str:
+        import os
+        if self.STATIC_DIR:
+            return self.STATIC_DIR.rstrip("/")
+        root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        return os.path.join(root, "static")
     DB_HOST: str
     DB_PORT: int
     DB_USER: str
@@ -54,6 +62,7 @@ class Settings(BaseSettings):
     STRIPE_PRICE_ID_CERCLE_COSMOS: str = ""
 
     ANTHROPIC_API_KEY: str
+    CLAUDE_SEMAPHORE_LIMIT: int = 8
 
     # --- TTS ElevenLabs ---
     ELEVENLABS_API_KEY: str = ""
