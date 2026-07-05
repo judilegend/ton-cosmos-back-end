@@ -42,7 +42,7 @@ app = FastAPI(
     redoc_url=None
 )
 
-REPORTS_DIR = "/app/static/reports"
+REPORTS_DIR = os.path.join(settings.STATIC_BASE, "reports")
 os.makedirs(REPORTS_DIR, exist_ok=True)
 
 app.mount(
