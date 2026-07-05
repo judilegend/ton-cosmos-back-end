@@ -7,6 +7,7 @@ from app.services.astrology_service import AstrologyService
 from app.services.claude_service import AIService
 from app.services.pdf_service import PDFService
 from app.services.email_service import EmailService
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class SubscriptionScheduler:
                         output_filename=pdf_filename
                     )
 
-                    file_path = pdf_url.replace("/reports/", "/app/static/reports/")
+                    file_path = os.path.join(settings.STATIC_BASE, "reports", os.path.basename(pdf_url))
                     
                     # Send Email
                     email_result = await self.email_service.send_email(
