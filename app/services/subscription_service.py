@@ -8,6 +8,7 @@ from app.services.astrology_service import AstrologyService
 from app.services.claude_service import AIService
 from app.services.pdf_service import PDFService
 from app.services.email_service import EmailService
+from app.services.time_utils import parse_birth_time
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,7 @@ class SubscriptionService:
                 email=customer_email,
                 full_name=metadata.get("full_name", ""),
                 birth_date=datetime.fromisoformat(metadata.get("birth_date")).date(),
-                birth_time=datetime.fromisoformat(metadata.get("birth_time")).time() if metadata.get("birth_time") else None,
+                birth_time=parse_birth_time(metadata.get("birth_time")),
                 timezone=metadata.get("timezone", "UTC"),
                 birth_city=metadata.get("birth_city", ""),
                 latitude=float(metadata.get("latitude", 0.0)),
