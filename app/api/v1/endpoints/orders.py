@@ -60,15 +60,15 @@ async def create_order(body: OrderPayload, db: AsyncSession = Depends(get_db)):
     
     # Mapping correct des montants en centimes
     if body.plan_type == PlanType.ESSENTIEL:
-        amount = 990
+        amount = 990  # 9,90 €
     elif body.plan_type == PlanType.COMPLET:
-        amount = 1990
+        amount = 2490  # 24,90 €
     elif body.plan_type == PlanType.ANNEE_COSMIQUE:
-        amount = 2490
+        amount = 3490  # 34,90 €
     elif body.plan_type == PlanType.COSMOS_INTEGRAL:
-        amount = 3990
+        amount = 5990  # 59,90 €
     else:
-        amount = 1990
+        amount = 2490  # 24,90 € (default)
     
     birth_time_obj = body.birth_time
     if isinstance(birth_time_obj, str):

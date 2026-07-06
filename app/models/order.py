@@ -16,9 +16,9 @@ class OrderStatus(str, enum.Enum):
 # Type de produit acheté.
 class PlanType(str, enum.Enum):
     ESSENTIEL = "essentiel"  # 9,90€
-    COMPLET = "complet"    # 19,90€
-    ANNEE_COSMIQUE = "annee_cosmique"
-    COSMOS_INTEGRAL = "cosmos_integral"
+    COMPLET = "complet"    # 24,90€
+    ANNEE_COSMIQUE = "annee_cosmique"  # 34,90€
+    COSMOS_INTEGRAL = "cosmos_integral"  # 59,90€
 
 
 # Représente une commande utilisateur.

@@ -1,5 +1,6 @@
 import os
 import secrets
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, HTTPException, status
@@ -12,15 +13,12 @@ from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from app.core.config import settings
 from app.database.session import engine
 from app.api.v1.router import api_router
-import asyncio
 from app.middleware.auth_middleware import AuthMiddleware
 from app.services.subscription_scheduler import SubscriptionScheduler
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Le schéma est géré exclusivement par les migrations Alembic.
-    # Lancer : `alembic upgrade head` avant chaque déploiement.
     scheduler = SubscriptionScheduler()
     scheduler_task = asyncio.create_task(scheduler.start())
     yield
@@ -52,24 +50,11 @@ app.mount(
 )
 
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "stripe-signature"],
-)
-
-security = HTTPBasic()
-
-
-app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SESSION_SECRET,
     same_site="lax" if settings.ENV == "development" else "none",
     https_only=settings.ENV != "development"
 )
-
-app.include_router(api_router, prefix="/api/v1")
 
 app.add_middleware(
     AuthMiddleware,
@@ -84,6 +69,7 @@ app.add_middleware(
         "/api/v1/admin/verify-reset-token",
         "/api/v1/stripe/create-checkout-session",
         "/api/v1/stripe/webhook",
+        "/api/v1/stripe/webhooks",
         "/api/v1/order/create",
         "/api/v1/order/test-chart",
         "/api/v1/stripe/order/ws/order-status-for-admin",
@@ -93,6 +79,18 @@ app.add_middleware(
         "/api/v1/subscription/subscribe-from-order",
     ]
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "stripe-signature"],
+)
+
+security = HTTPBasic()
+
+app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/")
