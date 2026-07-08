@@ -1,0 +1,22 @@
+[Unit]
+Description=Service FastAPI pour Ton Cosmos
+After=network.target postgresql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/ton-cosmos-back-end
+Environment="PATH=/var/www/ton-cosmos-back-end/venv/bin"
+# Charger le fichier .env de production
+EnvironmentFile=/var/www/ton-cosmos-back-end/.env
+ExecStart=/var/www/ton-cosmos-back-end/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 4
+
+Restart=always
+RestartSec=5
+
+# Niveaux de journalisation et standard outputs
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
