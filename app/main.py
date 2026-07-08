@@ -9,6 +9,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+
+from app.core.config import settings
+from app.core.rate_limit import limiter
 
 from app.core.config import settings
 from app.database.session import engine
@@ -39,6 +45,9 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 REPORTS_DIR = os.path.join(settings.STATIC_BASE, "reports")
 os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -47,6 +56,18 @@ app.mount(
     "/reports",
     StaticFiles(directory=REPORTS_DIR),
     name="reports"
+)
+
+# IMPORTANT: CORSMiddleware MUST be added LAST (to execute FIRST in the middleware stack)
+# This ensures CORS headers are applied before other middleware processes the request
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS if isinstance(settings.CORS_ORIGINS, list) else [settings.CORS_ORIGINS],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 app.add_middleware(
@@ -77,15 +98,9 @@ app.add_middleware(
         "/api/v1/subscription/subscribe",
         "/api/v1/subscription/create-portal-session",
         "/api/v1/subscription/subscribe-from-order",
+        "/api/v1/geocoding/reverse-geocode",
+        "/api/v1/geocoding/geocode",
     ]
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type", "stripe-signature"],
 )
 
 security = HTTPBasic()

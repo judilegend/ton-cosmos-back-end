@@ -1,5 +1,6 @@
 import asyncio
 import calendar
+import os
 import swisseph as swe
 from zoneinfo import ZoneInfo
 from typing import Dict, Any, List
@@ -10,7 +11,18 @@ class AstrologyService:
     _executor = ThreadPoolExecutor(max_workers=4)
 
     def __init__(self):
-        # swe.set_ephe_path('/usr/share/ephe/')
+        env_ephe_path = os.getenv("SE_EPHE_PATH")
+        if env_ephe_path:
+            ephe_path = env_ephe_path
+        else:
+            root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+            ephe_path = os.path.join(root, "ephe")
+
+        if os.path.isdir(ephe_path):
+            swe.set_ephe_path(ephe_path)
+        else:
+            raise FileNotFoundError(f"Ephemeris directory not found: {ephe_path}")
+
         self.planets_map = {
             "Soleil": swe.SUN, "Lune": swe.MOON, "Mercure": swe.MERCURY,
             "Vénus": swe.VENUS, "Mars": swe.MARS, "Jupiter": swe.JUPITER,

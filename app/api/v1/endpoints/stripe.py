@@ -9,6 +9,7 @@ from concurrent.futures import ProcessPoolExecutor
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, WebSocket, WebSocketDisconnect, Request, Response
 from pydantic import BaseModel
 
+from app.core.rate_limit import limiter
 from app.models.order import Order
 from app.database.deps import get_db
 from app.database.session import SessionLocal
@@ -51,7 +52,8 @@ class OrderRequest(BaseModel):
 
 
 @router.post("/create-checkout-session")
-async def create_checkout_session(body: OrderRequest):
+@limiter.limit("5/minute")
+async def create_checkout_session(body: OrderRequest, request: Request):
     try:
         session = await stripe_service.create_checkout_session(
             plan_type=body.plan_type,

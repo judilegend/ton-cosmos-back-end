@@ -35,7 +35,7 @@ async def test_webhook_stripe_success(mock_pipeline, mock_stripe_verify, client)
     assert response.status_code == status.HTTP_200_OK
     assert response.text == "Webhook processed"
     
-    mock_pipeline.assert_called_once_with(42, "cs_test_999", False)
+    mock_pipeline.assert_called_once_with(42, "cs_test_999", False, False, False, None)
 
 
 @pytest.mark.asyncio
@@ -73,4 +73,4 @@ async def test_webhook_stripe_order_not_found(mock_pipeline, mock_stripe_verify,
     assert response.status_code == status.HTTP_200_OK
     assert response.text == "Webhook processed"
     
-    mock_pipeline.assert_called_once_with(999999, "cs_test_999", False)
+    mock_pipeline.assert_called_once_with(999999, "cs_test_999", False, False, False, None)

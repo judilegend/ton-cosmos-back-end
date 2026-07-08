@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from datetime import datetime, timezone, time
 from app.database.session import SessionLocal
 from app.repositories.subscription_repository import SubscriptionRepository
