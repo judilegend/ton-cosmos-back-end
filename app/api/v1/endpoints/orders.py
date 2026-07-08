@@ -14,6 +14,7 @@ from app.schemas.order import *
 from app.schemas.report import *
 from app.core.websocket_manager import manager
 
+from app.core.rate_limit import limiter
 from app.services.utility_service import JWTService
 from app.services.astrology_service import AstrologyService
 from app.services.stripe_service import StripeService
@@ -55,6 +56,7 @@ async def websocket_endpoint_for_check_new_event(websocket: WebSocket):
         manager.disconnect(socket_admin_id, websocket)
 
 @router.post("/create", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@limiter.limit("10/minute")
 async def create_order(body: OrderPayload, db: AsyncSession = Depends(get_db)):
     order_repo = OrderRepository(db)
     
