@@ -50,6 +50,10 @@ class StripeService:
                 raise HTTPException(status_code=400, detail="Price ID Stripe pour le poster non configuré.")
             line_items.append({"price": settings.STRIPE_PRICE_ID_POSTER, "quantity": 1})
 
+        # Debug: afficher les line items avant envoi
+        print(f"DEBUG - Plan: {plan_key}, Audio: {has_audio}, Poster: {has_poster}")
+        print(f"DEBUG - Line items: {line_items}")
+
         try:
             session = stripe.checkout.Session.create(
                 mode="payment",
@@ -69,10 +73,13 @@ class StripeService:
             return session
 
         except stripe.error.StripeError as e:
+            error_message = str(e)
             print(f"STRIPE ERROR: {repr(e)}")
+            print(f"STRIPE ERROR MESSAGE: {error_message}")
+            print(f"Line items envoyés: {line_items}")
             raise HTTPException(
                 status_code=400,
-                detail=getattr(e, "user_message", "Erreur lors de la transaction avec Stripe")
+                detail=error_message or "Erreur Stripe lors de la transaction"
             )
         except Exception as e:
             print(f"INTERNAL STRIPE SERVICE ERROR: {e}")
