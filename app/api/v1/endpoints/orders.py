@@ -57,7 +57,7 @@ async def websocket_endpoint_for_check_new_event(websocket: WebSocket):
 
 @router.post("/create", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 @limiter.limit("10/minute")
-async def create_order(body: OrderPayload, db: AsyncSession = Depends(get_db)):
+async def create_order(body: OrderPayload, request: Request, db: AsyncSession = Depends(get_db)):
     order_repo = OrderRepository(db)
     
     # Mapping correct des montants en centimes
