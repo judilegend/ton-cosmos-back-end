@@ -53,7 +53,7 @@ class OrderRequest(BaseModel):
 
 @router.post("/create-checkout-session")
 @limiter.limit("5/minute")
-async def create_checkout_session(body: OrderRequest):
+async def create_checkout_session(body: OrderRequest, request: Request):
     try:
         session = await stripe_service.create_checkout_session(
             plan_type=body.plan_type,
