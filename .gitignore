@@ -14,7 +14,9 @@ venv/
 
 # Logs
 *.log
+stripe.exe
 
+/static/storage
 # pytest cache
 .pytest_cache/
 
