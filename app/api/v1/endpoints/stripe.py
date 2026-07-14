@@ -186,7 +186,10 @@ async def process_order_pipeline(
     amount_total: int | None = None  
 ):
     admin_ws = "admin-order-status"
-    socket_session_id = f"ton-cosmos-{order_id}"
+    order_channel = f"ton-cosmos-{order_id}"
+    socket_channel_ids = [order_channel]
+    if stripe_session_id:
+        socket_channel_ids.append(stripe_session_id)
 
     # 1. INITIALISATION & VERROUILLAGE (Session DB courte pour libérer la connexion)
     async with SessionLocal() as db:
@@ -253,7 +256,8 @@ async def process_order_pipeline(
 
     # Notification via WebSocket (la session DB est fermée ici, libérant la connexion au pool !)
     await manager.send_update(admin_ws, {"order_id": order_id, "status": OrderStatus.PROCESSING})
-    await manager.send_update(socket_session_id, {"step": 1, "status": True})
+    for socket_id in socket_channel_ids:
+        await manager.send_update(socket_id, {"step": 1, "status": True})
 
     loop = asyncio.get_running_loop()
     start_time = loop.time()
@@ -291,7 +295,8 @@ async def process_order_pipeline(
                 await report_repo.update_astral_data_json(report_id, chart)
                 await db.commit()
 
-        await manager.send_update(socket_session_id, {"step": 2, "status": True})
+        for socket_id in socket_channel_ids:
+            await manager.send_update(socket_id, {"step": 2, "status": True})
 
         # SVG (sans DB active)
         svg_map = await ai_service.GenerateSVGMap(chart)
@@ -340,12 +345,14 @@ async def process_order_pipeline(
                 await report_repo.update_ai_content_json(report_id, ai_content)
                 await db.commit()
 
-        await manager.send_update(socket_session_id, {"step": 3, "status": True})
+        for socket_id in socket_channel_ids:
+            await manager.send_update(socket_id, {"step": 3, "status": True})
 
         # 4. GENERATION AUDIO ET POSTER CONCURRENTES (sans DB active)
         async def generate_audio_task():
             if has_audio and not audio_url:
-                await manager.send_update(socket_session_id, {"step": 4, "status": "generating_audio"})
+                for socket_id in socket_channel_ids:
+                    await manager.send_update(socket_id, {"step": 4, "status": "generating_audio"})
                 try:
                     from app.services.tts_service import TTSService
                     tts = TTSService()
@@ -365,7 +372,8 @@ async def process_order_pipeline(
 
         async def generate_poster_task():
             if has_poster and not poster_url:
-                await manager.send_update(socket_session_id, {"step": 4, "status": "generating_poster"})
+                for socket_id in socket_channel_ids:
+                    await manager.send_update(socket_id, {"step": 4, "status": "generating_poster"})
                 try:
                     from app.services.storage_service import StorageService
                     storage = StorageService()
@@ -452,7 +460,8 @@ async def process_order_pipeline(
                 await report_repo.finalize_pdf(report_id, pdf_url, output_filename, duration)
                 await db.commit()
 
-        await manager.send_update(socket_session_id, {"step": 4, "status": True})
+        for socket_id in socket_channel_ids:
+            await manager.send_update(socket_id, {"step": 4, "status": True})
 
         # 6. ENVOI DE L'EMAIL (sans DB active)
         file_path = os.path.join(settings.STATIC_BASE, "reports", os.path.basename(pdf_url))
@@ -480,7 +489,8 @@ async def process_order_pipeline(
             await order_repo.update_status(order_id, OrderStatus.COMPLETED)
             await db.commit()
 
-        await manager.send_update(socket_session_id, {"step": 5, "status": True})
+        for socket_id in socket_channel_ids:
+            await manager.send_update(socket_id, {"step": 5, "status": True})
         await manager.send_update(admin_ws, {"order_id": order_id, "status": OrderStatus.COMPLETED})
 
     except Exception as e:
@@ -495,7 +505,8 @@ async def process_order_pipeline(
             logger.error(f"Impossible de passer le statut à FAILED en BDD: {db_err}")
 
         try:
-            await manager.send_update(socket_session_id, { "step": 1, "status": False, "error": str(e) })
+            for socket_id in socket_channel_ids:
+                await manager.send_update(socket_id, { "step": 1, "status": False, "error": str(e) })
             await manager.send_update(admin_ws, { "order_id": order_id, "status": OrderStatus.FAILED })
         except Exception as ws_err:
             logger.error(f"Échec envoi WS erreur: {ws_err}")
