@@ -128,7 +128,10 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
 
     if event_type == "checkout.session.completed":
         metadata = session.get("metadata", {})
-        if metadata.get("is_subscription") == "true":
+        is_subscription = metadata.get("is_subscription") == "true"
+        
+        if is_subscription:
+            logger.info(f"📦 Webhook subscription checkout reçu: session={session.get('id')}")
             background_tasks.add_task(SubscriptionService.process_checkout, session)
             return Response(content="Subscription checkout processed", status_code=200)
 
@@ -140,21 +143,21 @@ async def stripe_webhook(request: Request, background_tasks: BackgroundTasks):
         has_audio = metadata.get("has_audio") == "true" or metadata.get("has_audio") is True
         has_poster = metadata.get("has_poster") == "true" or metadata.get("has_poster") is True
 
-        logger.info(f"DEBUG: Session={session_id} | Order={order_id} | Status={payment_status} | Amount={amount_paid} | Audio={has_audio} | Poster={has_poster}")
+        logger.info(f"📦 Webhook order checkout reçu: session={session_id}, order={order_id}, status={payment_status}")
 
         if not session_id or not order_id:
             logger.warning("Missing data: session_id or order_id in metadata")
             return {"status": "error", "message": "Missing order_id in metadata"}
 
         if payment_status != "paid":
-            logger.info(f"Paiement non finalisé. Status: {payment_status}")
+            logger.info(f"⏳ Paiement non finalisé. Status: {payment_status}")
             return {"status": "not_paid"}
 
         try:
-            logger.info(f"Validation commande {order_id} lancée en arrière-plan...")
+            logger.info(f"🚀 Traitement commande {order_id} en arrière-plan...")
             background_tasks.add_task(process_order_pipeline, int(order_id), session_id, False, has_audio, has_poster, amount_paid)
         except ValueError:
-            logger.error(f"Erreur: order_id '{order_id}' n'est pas un nombre valide.")
+            logger.error(f"❌ Erreur: order_id '{order_id}' n'est pas un nombre valide.")
             return {"status": "invalid_id"}
         
         return Response(content="Webhook processed", status_code=200)
