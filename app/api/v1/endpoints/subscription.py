@@ -6,17 +6,23 @@ from app.repositories.order_repository import OrderRepository
 from app.services.stripe_service import StripeService
 from app.schemas.subscription import SubscriptionSubscribePayload, SubscriptionResponse, PortalSessionRequest
 from app.services.response_service import ServiceResponse
+import logging
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 @router.post("/subscribe-from-order/{order_id}")
 async def subscribe_from_order(order_id: int, db: AsyncSession = Depends(get_db)):
+    logger.info(f"🔵 POST /subscribe-from-order/{order_id} - Début du traitement")
     try:
         order_repo = OrderRepository(db)
         order = await order_repo.get_by_id(order_id)
         if not order:
+            logger.warning(f"❌ Commande {order_id} non trouvée")
             return ServiceResponse.error(message="Commande non trouvée", status_code=404)
 
+        logger.info(f"✓ Commande trouvée: {order.email}")
+        
         session = await StripeService.create_subscription_checkout_session(
             user_email=order.email,
             full_name=order.full_name,
@@ -27,13 +33,17 @@ async def subscribe_from_order(order_id: int, db: AsyncSession = Depends(get_db)
             latitude=order.latitude,
             longitude=order.longitude
         )
+        
+        logger.info(f"✓ Session d'abonnement créée: {session.id}")
         return ServiceResponse.success(
             message="Session d'abonnement Stripe créée avec succès",
             data={"checkout_url": session.url, "session_id": session.id}
         )
     except HTTPException as he:
+        logger.error(f"❌ HTTPException: {he.detail}")
         return ServiceResponse.error(message=he.detail, status_code=he.status_code)
     except Exception as e:
+        logger.error(f"❌ Erreur: {str(e)}", exc_info=True)
         return ServiceResponse.error(message=f"Erreur lors de la création de l'abonnement: {str(e)}", status_code=500)
 
 @router.post("/subscribe")
