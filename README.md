@@ -155,7 +155,7 @@ pour générer une clé secrète de signature temporaire.
     (ex: /api/v1/stripe/stripe/webhook)
 
     ```bash
-    stripe listen --forward-to localhost:8000/api/v1/stripe/stripe/webhook
+    stripe listen --forward-to localhost:8000/api/v1/stripe/webhook
     ```
 
 3. **Secret de signature** :
@@ -249,3 +249,8 @@ Pour approfondir les concepts de sécurité et les technologies utilisés dans c
 ---
 
 ## Fin du document - Dernière mise à jour : 04 Mai 2026 19:50
+
+
+
+
+…\ton-cosmos-back-end > .\venv\Scripts\pip.exe install pytest pytest-asyncio httpx

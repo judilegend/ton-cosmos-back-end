@@ -100,6 +100,28 @@
                     <p style="margin:0;">✨ <strong>Votre rapport est disponible en pièce jointe (PDF).</strong></p>
                 </div>
                 
+                {% if audio_url or poster_url %}
+                <div class="highlight-box" style="text-align: left; background-color: #FAF9F6; border: 1px solid #EAE7E0; padding: 20px; border-radius: 6px; margin: 30px 0;">
+                    <p style="margin-top: 0; font-weight: bold; color: #1A0B2E;">🎁 Vos suppléments inclus :</p>
+                    <ul style="padding-left: 20px; margin-bottom: 0; margin-top: 10px;">
+                        {% if audio_url %}
+                        <li style="margin-bottom: 10px;">
+                            <strong>Version Audio Guidée :</strong><br>
+                            Écoutez la synthèse de votre thème contée par Indira : <a href="{{ audio_url }}" style="color: #B8860B; font-weight: bold; text-decoration: underline;">Télécharger l'Audio (MP3)</a>
+                            <br><span style="font-size: 12px; color: #666;">(Lien sécurisé valable pendant 7 jours)</span>
+                        </li>
+                        {% endif %}
+                        {% if poster_url %}
+                        <li>
+                            <strong>Poster de votre Carte du Ciel HD :</strong><br>
+                            Téléchargez votre carte natale haute définition prête à être imprimée au format poster (A3/A2) : <a href="{{ poster_url }}" style="color: #B8860B; font-weight: bold; text-decoration: underline;">Télécharger le Poster (PDF)</a>
+                            <br><span style="font-size: 12px; color: #666;">(Lien sécurisé valable pendant 7 jours)</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+                
                 <p>L'astrologie est un outil de connaissance de soi. Nous vous invitons à parcourir ces pages lors d'un moment de calme, propice à la réflexion et à l'introspection.</p>
                 
                 <div class="signature">

@@ -14,6 +14,7 @@ from app.schemas.order import *
 from app.schemas.report import *
 from app.core.websocket_manager import manager
 
+from app.core.rate_limit import limiter
 from app.services.utility_service import JWTService
 from app.services.astrology_service import AstrologyService
 from app.services.stripe_service import StripeService
@@ -50,16 +51,26 @@ async def websocket_endpoint_for_check_new_event(websocket: WebSocket):
     await manager.connect(socket_admin_id, websocket)
     try:
         while True:
-            await websocket.receive_text() 
+            await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(socket_admin_id, websocket)
-        
 
 @router.post("/create", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
-async def create_order(body: OrderPayload, db: AsyncSession = Depends(get_db)):
+@limiter.limit("10/minute")
+async def create_order(body: OrderPayload, request: Request, db: AsyncSession = Depends(get_db)):
     order_repo = OrderRepository(db)
     
-    amount = 990 if body.plan_type == PlanType.ESSENTIEL else 1990
+    # Mapping correct des montants en centimes
+    if body.plan_type == PlanType.ESSENTIEL:
+        amount = 990  # 9,90 €
+    elif body.plan_type == PlanType.COMPLET:
+        amount = 2490  # 24,90 €
+    elif body.plan_type == PlanType.ANNEE_COSMIQUE:
+        amount = 3490  # 34,90 €
+    elif body.plan_type == PlanType.COSMOS_INTEGRAL:
+        amount = 5990  # 59,90 €
+    else:
+        amount = 2490  # 24,90 € (default)
     
     birth_time_obj = body.birth_time
     if isinstance(birth_time_obj, str):

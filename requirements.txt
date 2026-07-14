@@ -45,7 +45,7 @@ pydantic_core==2.46.3
 pydyf==0.12.1
 Pygments==2.20.0
 pyphen==0.17.2
-pyswisseph==2.10.3.2
+# pyswisseph==2.10.3.2
 pytest==9.0.3
 pytest-asyncio==1.4.0
 python-dotenv==1.2.2
@@ -72,3 +72,5 @@ weasyprint==68.1
 webencodings==0.5.1
 websockets==16.0
 zopfli==0.4.1
+pyswisseph==2.10.3.2
+slowapi==0.1.4

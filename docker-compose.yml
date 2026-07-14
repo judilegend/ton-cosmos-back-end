@@ -1,4 +1,4 @@
-#version: '3.8'
+version: "3.8"
 
 services:
   web:
@@ -8,9 +8,11 @@ services:
       - "8000:8000"
     volumes:
       - reports_data:/app/static/reports
+      - storage_data:/app/static/storage
     env_file:
       - .env
     restart: always
 
 volumes:
   reports_data:
+  storage_data:

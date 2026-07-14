@@ -1,11 +1,12 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Installer dépendances système
+# Installer dépendances système (avec gcc)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    gcc \
     python3-dev \
     libpango-1.0-0 \
     libharfbuzz0b \
@@ -14,23 +15,32 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg-dev \
     libopenjp2-7-dev \
     shared-mime-info \
+    curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Installer dépendances Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
 
-# Copier le projet
+# CONFIGURATION ÉCONOMIQUE : Utilise le cache local pour ne pas re-télécharger sur internet
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --default-timeout=1000 --retries 10 -r requirements.txt
+
 COPY . .
 
-RUN mkdir -p /app/static/reports
+RUN cp -r /app/ephe/. /usr/share/ephe/ && \
+    mkdir -p /app/static/reports /app/static/storage && \
+    useradd --create-home --shell /bin/bash appuser && \
+    chown -R appuser:appuser /app /usr/share/ephe
+USER appuser
 
-# Exposer le port
+ENV SE_EPHE_PATH=/usr/share/ephe/
+
 EXPOSE 8000
 
-# Lancer l'API
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
+
+# Configuration par défaut (Production)
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2"]
